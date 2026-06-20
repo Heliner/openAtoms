@@ -78,10 +78,13 @@ const EMPTY_INDEX_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Building…</title>
+  <title>No app yet</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-zinc-950 text-zinc-300 flex items-center justify-center min-h-screen">
-  <div class="text-sm opacity-60">Alex is wiring up your app…</div>
+<body class="bg-zinc-950 text-zinc-400 flex items-center justify-center min-h-screen p-8 text-center">
+  <div class="text-sm opacity-70 leading-relaxed">
+    No app yet · share a product idea (e.g. "做一个 todo 应用")<br/>
+    and the team will start building it here.
+  </div>
 </body>
 </html>`;
