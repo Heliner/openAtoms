@@ -102,7 +102,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const mikeMsgId = nanoid(10);
         send({ type: "agent-message-start", id: mikeMsgId, agent: "mike", kind: "chat" });
         const mike = await mikeIntro(idea);
-        const mikeText = mike.text || "";
+        let mikeText = mike.text || "";
+
+        // Intent gate: Mike emits a [CHITCHAT] prefix when the input is a
+        // greeting / vague / off-topic message. We strip the marker from the
+        // user-visible text and short-circuit the SOP before Emma runs — no
+        // PRD, no Bob, no Alex. The project's terminal status becomes 'built'
+        // so it doesn't sit forever in BUILDING.
+        const isChitchat = /^\s*\[CHITCHAT\]/i.test(mikeText);
+        if (isChitchat) {
+          mikeText = mikeText.replace(/^\s*\[CHITCHAT\]\s*/i, "");
+        }
+
         for (const ch of mikeText.match(/[\s\S]{1,28}/g) || []) {
           send({ type: "agent-message-chunk", id: mikeMsgId, delta: ch });
           await new Promise((r) => setTimeout(r, 30));
@@ -110,6 +121,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         send({ type: "agent-message-end", id: mikeMsgId });
         await persistMessage(id, "mike", "chat", mikeText);
         await recordUsage(id, "mike", MODELS.std, mike.usage, "chat");
+
+        if (isChitchat) {
+          send({ type: "done" });
+          await db().execute({
+            sql: "UPDATE projects SET status = ?, updated_at = ? WHERE id = ?",
+            args: ["built", Date.now(), id],
+          });
+          controller.close();
+          return;
+        }
 
         // -------- Emma PRD --------
         send({ type: "status", content: "Emma is drafting a PRD…" });
