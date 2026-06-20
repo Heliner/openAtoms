@@ -34,6 +34,7 @@
 - ✅ E2E 4 用例 Grade A：bookshelf / 单位换算器 / @Iris 调研 / followup 改需求
 - ✅ Turso libsql 持久化，刷新不丢历史 / vfiles / shell record
 - ✅ **Daytona 真容器** — `run_command` 真跑 Linux shell（`uname -a` 见真 Ubuntu kernel），`run_python` 真跑 Python 3.14 IPython kernel（`import random` 真生种子），vfiles 增量同步。E2E 实测：Bob `run_python` 冷启 ~8s + Alex `run_command(pwd)` → `/home/daytona/project` 暖路径 ~2s
+- ✅ **意图门控 chitchat 短路** — Mike 提示词内置 INPUT TRIAGE（few-shot 6+6 例），遇 "你好" / "在吗" / "测试" 等 → 输出 `[CHITCHAT]` 前缀；orchestrate 检测后 strip marker、skip Emma+Bob+Alex、status='built'。"做一个 todo" 仍走全 SOP。避免兜底乱编 Personal Task Tracker PRD
 
 **未做 / 主动砍**
 
