@@ -68,9 +68,27 @@
 
 ## 4. 笔试结果回收
 
-- 🌐 在线 Demo：<待 Vercel 部署后填写>
-- 📦 GitHub 仓库：<待推送后填写，设 public>
-- 💰 大模型用量：Doubao（pro/std/lite 三档分流）+ Vercel Edge — 一次完整 demo 流（含 race + followup）约 …… token，成本 ¥……
+- 🌐 **在线 Demo**：https://atoms-demo-sigma.vercel.app
+- 📦 **GitHub 仓库**：https://github.com/Heliner/atmo-demo （public）
+- 🤖 **大模型**：Doubao（pro `ep-20260305202828-gc8n7` / std `ep-20260506171031-d8xnm` / lite `ep-20260506170930-gb5tx`，分别用于 Bob 架构 / Alex 工程 / Mike-Emma-Iris 轻量角色）
+- 🐳 **真容器**：Daytona Cloud（per-project sandbox，autoStopInterval=10min，autoDeleteInterval=60min）
+- 💾 **持久化**：Turso libsql（hosted SQLite over HTTP，schema 8 张表见 `src/lib/db.ts`）
+- 💰 **用量**：一次完整 Team SOP（Mike→Emma→Bob→Alex 跑完）约 **8K-15K token**（Doubao 价格 ¥0.001-0.01/K，**单次成本约 ¥0.05-0.10**）+ Daytona 容器活跃 ~30-60s（按 Daytona 定价 ~$0.001/min，**单次约 ¥0.005**）。Vercel Hobby 层免费。
+
+### 复现指南（reviewer）
+
+> 一行话推荐：进 https://atoms-demo-sigma.vercel.app 输 "做一个极简 todo 应用" 选 Team → 看 Mike/Emma/Bob/Alex 真在动手 → Approve 后等 ~60s 看右侧 iframe 真显示生成的 App + 真用 Turso 数据。
+
+详细测试矩阵：
+
+| 场景 | 操作 | 期望证据 |
+|---|---|---|
+| 1️⃣ 全 SOP | 主页输 "极简 todo 应用，带 priority"，选 Team → Approve | Mike 介绍 / Emma PRD / Bob exec_sql+run_python（真 Python 输出，无 `[mock]`）/ Alex write_file × 3 / 右侧 Shell tab 显 `sandbox: daytona` |
+| 2️⃣ Followup | 在 BUILT 项目下方输 "加完成时间字段" | Alex 续写 app.js（版本号 v1→v2）|
+| 3️⃣ Engineer mode | 主页选 Engineer，输 "单位换算器" | 跳过 Mike/Bob，仅 Alex 工作 |
+| 4️⃣ @mention 路由 | 任一项目输 "@Iris 调研待办市场" | Iris 输出 markdown brief，0 工具调用 |
+| 5️⃣ 沙箱 SQLite | 任一 BUILT 项目切 Database tab | 真表/真行；iframe 内 `window.atomsDb` 真用 |
+| 6️⃣ Daytona vfiles 同步 | Shell tab 看 `alex $ ls -la` | 显示 Alex 写入的真文件 + 真权限/owner/timestamp |
 
 ### 本地运行
 

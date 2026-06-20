@@ -4,9 +4,10 @@
 
 ## Demo links
 
-- Live: `<Vercel URL to be filled in after deploy>`
-- GitHub: `<repo URL to be filled in>`
-- Architecture docs: [docs/DELIVERY-SPEC.md](docs/DELIVERY-SPEC.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/MODULES.md](docs/MODULES.md)
+- 🌐 Live: **https://atoms-demo-sigma.vercel.app**
+- 📦 GitHub: **https://github.com/Heliner/atmo-demo**
+- 📄 Submission writeup: [docs/SUBMISSION.md](docs/SUBMISSION.md)
+- 📐 Architecture docs: [docs/DELIVERY-SPEC.md](docs/DELIVERY-SPEC.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/MODULES.md](docs/MODULES.md)
 
 ## 30-second demo
 
