@@ -1,41 +1,44 @@
-# Atoms Demo
+# openAtoms
 
-> A working multi-agent vibe-coding platform clone (Atoms.dev-inspired). 9-hour build.
+> Open-source, self-hostable multi-agent **vibe-coding** platform — an open alternative to [Atoms.dev](https://atoms.dev).
 
-## Demo links
+Describe an app in one line. A small team of AI agents — a lead, a PM, a researcher, an architect, and an engineer — plans it, researches it, writes the code file by file, runs it in a **real cloud sandbox**, and drives your screen while they work. Real tool calls, real containers, everything persisted. No fake chat.
 
-- 🌐 Live: **https://atoms-demo-sigma.vercel.app**
-- 📦 GitHub: **https://github.com/Heliner/atmo-demo**
-- 📄 Submission writeup: [docs/SUBMISSION.md](docs/SUBMISSION.md)
-- 📐 Architecture docs: [docs/DELIVERY-SPEC.md](docs/DELIVERY-SPEC.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/MODULES.md](docs/MODULES.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-## 30-second demo
+- 🌐 **Live demo:** https://atoms-demo-sigma.vercel.app
+- 📐 **Docs:** [Architecture](docs/ARCHITECTURE.md) · [Modules](docs/MODULES.md) · [Delivery spec](docs/DELIVERY-SPEC.md)
 
-- **5-agent pipeline.** Mike routes → Emma writes a JSON PRD → human Approve → Bob runs `exec_sql` + `run_python` → Alex calls `write_file` repeatedly. No "fake chat", real tool calls, persisted.
-- **Real sandbox.** A virtual filesystem (`vfiles`) + a virtual SQL database (`sandbox_tables` / `sandbox_rows`) live in libsql; Sandpack renders the generated app as a working iframe you can click.
-- **Hybrid presentation tools.** Side-effect tools (`write_file` / `exec_sql` / `run_python`) plus presentation tools (`focus_file` / `show_table` / `show_preview` / `show_console`) let the agent direct the user's attention — Atoms-style "agent in the driver's seat".
+---
 
-## What's built (matrix from DELIVERY-SPEC §2)
+## Why openAtoms
 
-| Phase | Capability | Status |
+Atoms.dev showed a compelling idea: agents that don't just chat — they **take the wheel**. They write files, run SQL, execute code in a container, and switch your tabs to show you what they just did.
+
+openAtoms is an open, self-hostable take on that idea you can **read, fork, and run on your own keys**. There's no black box: every agent prompt, every tool, and the whole standard-operating-procedure (SOP) lives in `src/lib/agents`. Bring your own LLM key and your own sandbox, and you own the entire loop.
+
+## Meet the team
+
+| Agent | Role | What they do |
 |---|---|---|
-| **Phase 1 — Agent backbone** | Multi-agent routing (Mike→Emma→Bob→Alex hardcoded SOP) | OK |
-| | Three-layer context sharing (workspace / plan / per-agent) | OK |
-| | Short-term memory (Emma `preferences` → `memories` → injected into Bob/Alex prompts) | OK |
-| | Tool execution (function calling loop, max 8 steps) | OK |
-| | File sandbox (`vfiles` + `write_file`) | OK |
-| | DB sandbox (`sandbox_tables/rows` + `exec_sql` mini-parser) | OK |
-| | Bonus tools (`read_file` / `list_files` / `run_command` / `run_python`) | OK |
-| **Phase 2 — Frontend + UX** | `/` + `/dashboard` + `/project/[id]` 3 pages | OK |
-| | 4 tabs (Preview / Code / Database / Console) with hybrid auto-switching | OK |
-| | Monaco read-only editor via Sandpack | OK |
-| | File tree from `vfiles` | OK |
-| | Agent billing (token accounting + sidebar widget) | OK |
-| | Stop button + AbortController end-to-end | partial |
-| | Race Mode UI | partial (disabled in v1) |
-| **Phase 3 — Out of scope** | Conversation versioning, real SSH, real Stripe, real Supabase, GitHub OAuth, Visual Editor DOM editing, supervisor LLM router, group chat, vector memory, multi-file Next.js generation | not done |
+| **Mike** 🧭 | Team Lead | Routes the work and pauses for your approval at key checkpoints. |
+| **Emma** 📝 | Product Manager | Turns your one-liner into a crisp JSON PRD and task list. |
+| **Iris** 🔭 | Researcher | Validates the idea with web research before building. |
+| **Bob** 🧱 | Architect | Picks the stack and designs + seeds the data model (`exec_sql`, `run_python`). |
+| **Alex** ⚡ | Engineer | Writes the app file by file (`write_file`), then shows a live preview. |
 
-## Architecture diagram
+Baton-passing is an explicit SOP, with a human **Approve** gate between planning and execution.
+
+## How it works
+
+- **Two SSE endpoints.** `/plan` streams Mike → Emma (routing + PRD). After you approve, `/execute` runs the tool-call loop (Bob → Alex, up to 8 steps) — both stream token-by-token.
+- **Real sandbox.** [Daytona](https://daytona.io) cloud containers run `run_command` / `run_python` (no mock, no fallback — set `DAYTONA_API_KEY`). A virtual filesystem (`vfiles`) and a virtual SQL database (`sandbox_tables` / `sandbox_rows`) live in libsql; **Sandpack** renders the generated app as a working iframe you can click.
+- **Hybrid tools.** Side-effect tools (`write_file` / `exec_sql` / `run_python`) plus presentation tools (`focus_file` / `show_table` / `show_preview` / `show_console`) let the agent **direct your attention** — Atoms-style "agent in the driver's seat".
+- **Context + memory.** Three-layer context sharing (workspace / plan / per-agent) and short-term memory: Emma's `preferences` are distilled into `memories` and injected into Bob's and Alex's prompts, so the theme color you asked for actually reaches the generated CSS.
+
+### Architecture
 
 ```mermaid
 flowchart LR
@@ -47,13 +50,13 @@ flowchart LR
         Plan["/api/.../plan SSE<br/>Mike → Emma"]
         Exec["/api/.../execute SSE<br/>Bob → Alex (tool loop)"]
     end
-    subgraph LLM["Doubao ARK (OpenAI-compatible)"]
+    subgraph LLM["OpenAI-compatible provider (default: Doubao ARK)"]
         Models["Pro / Std / Lite"]
     end
     subgraph Sandbox["Tool handlers"]
         WF[write_file]
         SQL[exec_sql]
-        RUN[run_python / run_command]
+        RUN["run_python / run_command<br/>(Daytona container)"]
         SHOW[focus_file / show_*]
     end
     subgraph DB["libsql / Turso"]
@@ -69,78 +72,108 @@ flowchart LR
     Tabs -- reads --> T
 ```
 
+## Features
+
+- **5-agent SOP pipeline** with a human approval checkpoint between plan and build.
+- **Real code execution** in Daytona cloud containers — not a mock.
+- **File + SQL sandbox** persisted in libsql / Turso, with a mini SQL parser for `exec_sql`.
+- **Live preview** via Sandpack, pinned to `template="static"` so the iframe renders without the codesandbox.io bundler.
+- **4 tabs** — Preview / Code (Monaco, read-only) / Database (sql.js DataGrid) / Console — with hybrid auto-switching driven by the agent's presentation tools.
+- **Token accounting** with a per-agent billing sidebar.
+- **Streaming everywhere** (Vercel AI SDK `streamText` + tool loop) with a **Stop** button wired to `AbortController` end-to-end.
+- **Follow-ups, @-mentions, and an experimental Race Mode** (multiple engineers compete) — routed under `src/app/api/projects/[id]/{followup,mention,race}`.
+
 ## Tech stack
 
 - **Next.js 16** App Router with route handlers for SSE.
 - **React 19** client components for the streaming chat + Sandpack viewer.
-- **Tailwind v4** zero-config dark theme.
-- **Doubao ARK** (OpenAI-compatible) — Pro / Std / Lite via `@ai-sdk/openai-compatible`.
-- **libsql / Turso** — single client, switches between local file and Turso via env.
-- **Sandpack** — `@codesandbox/sandpack-react` pinned to `template="static"` so the iframe renders without depending on the codesandbox.io bundler.
-- **sql.js** — in-browser SQLite for the Database tab DataGrid.
+- **Tailwind v4** zero-config theme.
+- **OpenAI-compatible LLM** via `@ai-sdk/openai-compatible` — the default wiring targets **Doubao ARK** (Pro / Std / Lite). See [Using another LLM](#using-another-llm).
+- **libsql / Turso** — single client, switches between a local file and Turso via env.
+- **Daytona** — real Linux containers for `run_command` / `run_python`.
+- **Sandpack** (`@codesandbox/sandpack-react`) + **sql.js** — in-browser preview and SQLite DataGrid.
 - **Vercel AI SDK** — `streamText` + `maxSteps` powers the tool-call loop.
 
-## Local quick start
+## Quick start
 
 ```bash
-git clone <repo>
-cd atoms-demo
-cp .env.example .env.local   # then set DOUBAO_API_KEY
+git clone git@github.com:Heliner/openAtoms.git
+cd openAtoms
+cp .env.example .env.local   # set DOUBAO_API_KEY and DAYTONA_API_KEY
 pnpm install
 pnpm dev
 # open http://localhost:3000
 ```
 
-Without `TURSO_URL` set, the app falls back to a local `./atoms-demo.db` sqlite file — the schema is applied on first request.
+Without `TURSO_URL` set, the app falls back to a local `./atoms-demo.db` SQLite file — the schema is applied on first request.
 
-## Demo script (for reviewers)
+### Take it for a spin
 
-1. Open `/`.
-2. Click **Start →**.
-3. Pick the "A travel diary that remembers your trips" template (or type your own one-liner).
-4. Submit. Mike posts a one-line plan and routes to Emma.
-5. Emma streams a JSON PRD including a `preferences` block. Click **Approve**.
-6. Watch the **9-step happy path**: Bob calls `exec_sql` to create `trips` and seed rows, then `run_python` to summarise; Alex calls `write_file` for `index.html`, `style.css`, `app.js`, ending with `show_preview`.
-7. The iframe in the Preview tab is interactive — click around the generated app.
-8. Switch to **Code** (Monaco read-only via Sandpack), **Database** (live `trips` rows), and **Console** (agent tool log).
-9. Click **Stop** mid-stream to verify the AbortController unwinds cleanly and the partial assistant message stays in the transcript.
+1. Open `/` and click **Start →**.
+2. Pick a template (e.g. *"A travel diary that remembers your trips"*) or type your own one-liner.
+3. Mike posts a one-line plan and routes to Emma, who streams a JSON PRD with a `preferences` block. Click **Approve**.
+4. Watch Bob call `exec_sql` to create and seed tables, then `run_python` to summarise; Alex calls `write_file` for `index.html` / `style.css` / `app.js`, ending with `show_preview`.
+5. The **Preview** iframe is interactive. Switch to **Code**, **Database** (live rows), and **Console** (tool log). Hit **Stop** mid-stream to see the `AbortController` unwind cleanly.
 
-## Deploying to Vercel + Turso
+## Configuration
+
+| Env var | Required | Purpose |
+|---|---|---|
+| `DOUBAO_API_KEY` | ✅ | LLM calls (OpenAI-compatible; Doubao ARK by default). |
+| `DAYTONA_API_KEY` | ✅ for `run_command` / `run_python` | Real container execution. No mock fallback. |
+| `TURSO_URL` / `TURSO_TOKEN` | optional | Production persistence. Blank → local SQLite file. |
+| `DOUBAO_MODEL_PRO/STD/LITE` | optional | Override the model/endpoint IDs. |
+| `DAYTONA_API_URL` | optional | Defaults to `https://app.daytona.io/api`. |
+
+### Using another LLM
+
+The provider is created with `createOpenAICompatible` in [`src/lib/llm/doubao.ts`](src/lib/llm/doubao.ts). To point openAtoms at any other OpenAI-compatible endpoint (OpenAI, Groq, OpenRouter, a local vLLM, …), change `BASE_URL` and the API key there, and set the three model IDs via `DOUBAO_MODEL_*`. Everything downstream (streaming, tool loop, billing) is provider-agnostic.
+
+## Self-hosting (Vercel + Turso + Daytona)
 
 ```bash
-turso db create atoms-demo-prod
-turso db tokens create atoms-demo-prod      # save as TURSO_TOKEN
-turso db show atoms-demo-prod --url          # save as TURSO_URL
+turso db create openatoms-prod
+turso db tokens create openatoms-prod    # → TURSO_TOKEN
+turso db show openatoms-prod --url        # → TURSO_URL
 
 vercel link
 vercel env add DOUBAO_API_KEY
+vercel env add DAYTONA_API_KEY
 vercel env add TURSO_URL
 vercel env add TURSO_TOKEN
 vercel deploy --prod
 ```
 
-Then open the deployed URL. The schema is created lazily on the first request via `ensureSchema()`.
+The schema is created lazily on the first request via `ensureSchema()`.
 
-**Optional:** set `E2B_API_KEY` in Vercel env to swap the mock sandbox for real Linux containers — `lib/sandbox/runner.ts` already routes through that env check, just uncomment the `runE2B` body and `pnpm add @e2b/code-interpreter`.
+## Roadmap
 
-## What's intentionally NOT done (engineering taste)
+openAtoms is intentionally lean today. Contributions toward any of these are welcome:
 
-- **Race Mode** — UI is wired but the route is disabled in v1; out of scope for the 9-hour build.
-- **Real Stripe** — billing widget shows token cost only, no payment integration.
-- **Real GitHub OAuth** — no `Sign in with GitHub`; project ownership is implicit.
-- **Multi-file Next.js generation** — Alex generates static HTML/CSS/JS, not full Next apps.
-- **Visual Editor** — no DOM editing in the iframe (cross-origin postMessage is 1-2 days of work).
-- **Supervisor LLM router** — agent routing is hardcoded SOP, no dynamic dispatcher.
-- **Agent group chat / @-mention** — single-direction baton-passing only.
-- **Vector memory / cross-project recall** — only project-scoped `memories` prompt injection.
-- **Real shell** — mock runner returns plausible output; E2B hook is ready but commented out.
+- **Supervisor LLM router** — dynamic dispatch instead of the hardcoded SOP.
+- **Multi-file Next.js generation** — Alex currently emits static HTML/CSS/JS.
+- **Visual editor** — DOM editing inside the preview iframe (cross-origin postMessage).
+- **Real auth + project ownership** — GitHub OAuth (ownership is implicit today).
+- **Vector / cross-project memory** — memory is project-scoped prompt injection today.
+- **Payments** — the billing widget shows token cost only, no Stripe.
+- **Race Mode GA** — the route is wired but experimental.
 
-## Quality observability
+## Contributing
 
-- **38 messages persisted** with strict agent-attribution disjoint sets in the Hello World E2E.
-- **Memory injection verified** — `theme_color=emerald` flowed Emma → `memories` → Alex prompt → generated CSS.
-- **Sandpack `template="static"` pinned** to avoid the codesandbox.io bundler outage that surfaced during testing in CN.
+PRs and issues welcome. The interesting bits:
 
-## Cost note
+- **Agents & SOP** — [`src/lib/agents`](src/lib/agents) (`roles.ts`, `prompts.ts`, `tools.ts`, `orchestrate.ts`)
+- **Sandbox** — [`src/lib/sandbox`](src/lib/sandbox) (`runner.ts` Daytona, `sqlbox.ts`, `vfiles.ts`)
+- **LLM** — [`src/lib/llm`](src/lib/llm)
 
-Doubao Pro / Std / Lite token pricing is hardcoded in `src/lib/agents/billing.ts`. A typical project run (~25k input + ~5k output tokens across 4 agents) is a few cents. See the sidebar widget for live accounting.
+Run `pnpm lint` before opening a PR, and please open an issue to discuss anything large.
+
+## Credits
+
+Inspired by [Atoms.dev](https://atoms.dev). Built with the [Vercel AI SDK](https://sdk.vercel.ai), [Sandpack](https://sandpack.codesandbox.io), [Daytona](https://daytona.io), [Turso/libsql](https://turso.tech), and [Next.js](https://nextjs.org).
+
+openAtoms began as a fast build (see [docs/SUBMISSION.md](docs/SUBMISSION.md) for the origin story) and is now maintained as an open-source project.
+
+## License
+
+[MIT](LICENSE) © Heliner and openAtoms contributors.
